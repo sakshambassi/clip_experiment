@@ -250,9 +250,9 @@ if __name__ == "__main__":
     # valid_dir = "./data/valid.json"
     # test_dir = "./data/test.json"
 
-    test_dir = "/maven_data/test.json"
-    valid_dir = "/maven_data/valid.json"
-    train_dir = "/maven_data/train.json"
+    test_dir = "./maven_data/test.json"
+    valid_dir = "./maven_data/valid.json"
+    train_dir = "./maven_data/train.json"
 
     vocabulary = get_vocab(train_dir, valid_dir)
     dataset = {
@@ -355,11 +355,10 @@ if __name__ == "__main__":
             logits = prompt_model(inputs)
             labels = inputs['label']
             label_list = convert_labels_to_list(labels)
+            optimizer.zero_grad()
             loss = loss_func(logits, label_list)
             loss.backward()
             tot_loss += loss.item()
-            optimizer.step()
-            optimizer.zero_grad()
 
             if step %100 ==99:
                 print("\nStep {}, average loss: {}".format(step, tot_loss/(step+1)), flush=True)
@@ -393,6 +392,7 @@ if __name__ == "__main__":
                     current_patience += 1
                     if current_patience > max_patience:
                         sys.exit(0)
-
+            optimizer.step()
             progress.update(1)
         progress.close()
+
