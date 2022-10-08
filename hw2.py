@@ -321,7 +321,7 @@ max_patience, current_patience = 3, 0
 if_exit = False
 loss_function = torch.nn.BCEWithLogitsLoss()
 
-for epoch in range(10):
+for epoch in range(1):
     if if_exit:
         break
     tot_loss = 0.0
@@ -346,11 +346,11 @@ for epoch in range(10):
         optimizer.zero_grad()
 
         if step % 100 == 99:
-            print("\nStep {}, average loss: {}".format(step, tot_loss / (step + 1)), flush=True)
+            print("\nEpoch {}, average loss: {}".format(epoch, tot_loss / (step + 1)), flush=True)
 
             allpreds, alllabels = [], []
             # Validation:
-            valid_progress = tqdm.tqdm(total=len(validation_dataloader), ncols=150, desc="Validation: ")
+            # valid_progress = tqdm.tqdm(total=len(validation_dataloader), ncols=150, desc="Validation: ")
             prompt_model.eval()
             with torch.no_grad():
                 for step, inputs in enumerate(validation_dataloader):
@@ -363,9 +363,9 @@ for epoch in range(10):
 
                     alllabels.extend(label_list)
                     allpreds.extend(pred_labels)
-                    valid_progress.update(1)
+                    #valid_progress.update(1)
 
-            valid_progress.close()
+            #valid_progress.close()
             prompt_model.train()
 
             p, r, f, total = evaluation(alllabels, allpreds, vocabulary)
@@ -383,3 +383,22 @@ for epoch in range(10):
 
         progress.update(1)
     progress.close()
+
+# Model performance on test data
+import numpy as np
+allpreds, alllabels = [], []
+prompt_model.eval()
+
+for step, inputs in enumerate(test_dataloader):
+    if use_cuda:
+        inputs = to_device(inputs, device)
+    logits = prompt_model(inputs)
+    labels = inputs['label']
+    label_list = convert_labels_to_list(labels)
+    pred_labels = predict(logits)
+
+    alllabels.extend(label_list)
+    allpreds.extend(pred_labels)
+
+with open('test.npy', 'wb') as f:
+    np.save(f, np.array(allpreds, dtype=object))
